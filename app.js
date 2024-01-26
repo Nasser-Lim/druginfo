@@ -5,6 +5,24 @@ const app = express();
 
 app.use(cors());
 
+// 네이버 검색 API 예제 - 블로그 검색
+var client_id = 'CMGj7Aq51QyiAa9l4EYE';
+var client_secret = 'h9pdYgS2l7';
+app.get('/search/doc', async function (req, res) { // async 키워드 추가
+   var api_url = 'https://openapi.naver.com/v1/search/doc?query=' + encodeURI(req.query.query); // JSON 결과
+
+   try {
+       const response = await axios.get(api_url, {
+           headers: {'X-Naver-Client-Id': client_id, 'X-Naver-Client-Secret': client_secret}
+       });
+
+       res.status(200).json(response.data); // JSON으로 응답
+   } catch (error) {
+       console.error('Error:', error);
+       res.status(500).json({ message: 'Internal Server Error' });
+   }
+});
+
 // 의약품 정보 API
 const DRUG_API_URL = 'http://apis.data.go.kr/1471000/DrbEasyDrugInfoService/getDrbEasyDrugList';
 const DRUG_SERVICE_KEY = 'klnPMx6BcJRvXEqdyooFTB4iLH1XwVLiIQPlcXxK2BGGGx7zR/R37T5SYr9a9GG3okt5Wpg63CnIJrsD6nG07g==';

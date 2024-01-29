@@ -5,6 +5,24 @@ const app = express();
 
 app.use(cors());
 
+// 국가법령정보 API
+const OPENLAW_API_URL = 'http://www.law.go.kr/DRF/lawSearch.do';
+const OPENLAW_SERVICE_KEY = 'paralix';
+
+app.get('/lawsearch', async (req, res) => {
+    let queryParams = '?' + encodeURIComponent('OC') + '=' + encodeURIComponent(OPENLAW_SERVICE_KEY);
+    Object.keys(req.query).forEach(key => {
+        queryParams += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(req.query[key]);
+    });
+
+    try {
+        const response = await axios.get(OPENLAW_API_URL + queryParams);
+        res.send(response.data);
+    } catch (error) {
+        res.status(500).send(error.toString());
+    }
+});
+
 // 네이버 검색 API 예제 - 블로그 검색
 var client_id = 'CMGj7Aq51QyiAa9l4EYE';
 var client_secret = 'h9pdYgS2l7';

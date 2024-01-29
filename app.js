@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const xml2js = require('xml2js');
 const app = express();
 
 app.use(cors());
@@ -8,6 +9,20 @@ app.use(cors());
 // 국가법령정보 API
 const OPENLAW_API_URL = 'http://www.law.go.kr/DRF/lawSearch.do';
 const OPENLAW_SERVICE_KEY = 'paralix';
+
+// app.get('/lawsearch', async (req, res) => {
+//     let queryParams = '?' + encodeURIComponent('OC') + '=' + encodeURIComponent(OPENLAW_SERVICE_KEY);
+//     Object.keys(req.query).forEach(key => {
+//         queryParams += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(req.query[key]);
+//     });
+
+//     try {
+//         const response = await axios.get(OPENLAW_API_URL + queryParams);
+//         res.send(response.data);
+//     } catch (error) {
+//         res.status(500).send(error.toString());
+//     }
+// });
 
 app.get('/lawsearch', async (req, res) => {
     let queryParams = '?' + encodeURIComponent('OC') + '=' + encodeURIComponent(OPENLAW_SERVICE_KEY);
@@ -17,11 +32,31 @@ app.get('/lawsearch', async (req, res) => {
 
     try {
         const response = await axios.get(OPENLAW_API_URL + queryParams);
-        res.send(response.data);
+        const parser = new xml2js.Parser();
+
+        parser.parseString(response.data, (err, result) => {
+            if (err) {
+                res.status(500).send(err.toString());
+                return;
+            }
+
+            if (result && result.PrecSearch && result.PrecSearch.prec) {
+                result.PrecSearch.prec.forEach(prec => {
+                    if (prec['판례상세링크']) {
+                        prec['판례상세링크'][0] = 'https://www.law.go.kr' + prec['판례상세링크'][0];
+                    }
+                });
+            }
+
+            const builder = new xml2js.Builder();
+            const xml = builder.buildObject(result);
+            res.send(xml);
+        });
     } catch (error) {
         res.status(500).send(error.toString());
     }
 });
+
 
 // 네이버 검색 API 예제 - 블로그 검색
 var client_id = 'CMGj7Aq51QyiAa9l4EYE';
